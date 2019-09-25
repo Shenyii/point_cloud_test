@@ -7,3 +7,5 @@
 “object_tracking”
 功能：将输入的点云信息进行聚类，然后与上一帧数据进行关联，再用最小二乘法估计类别的线速度
 输入topic：“object_point_cloud”
+输出topic：“/object_velocity”、“/point_category”、“rqt_plot_test”
+
