@@ -331,7 +331,7 @@ double Object_Tracking::correlationOfFun(int now,int last,int period)
         {
             max_bel = max_bel < correlation_of_category_[now][i] ? correlation_of_category_[now][i]:max_bel;
         }
-        ans = 0.8 * (w1_ + w2_ - max_bel); /////////////////////////////////////////////////////////////////////////////
+        ans = 0.7 * (w1_ + w2_ - max_bel); /////////////////////////////////////////////////////////////////////////////
     }
     else
     {
