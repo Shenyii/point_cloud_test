@@ -18,4 +18,6 @@
     <node name="obstacle_points" pkg="point_cloud_test" type="obstacle_points"/>
 
     <node name="object_tracking" pkg="point_cloud_test" type="object_tracking"/>
+
+    <node name="own_cost_map" pkg="point_cloud_test" type="own_cost_map" output="screen"/>
 </launch>

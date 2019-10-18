@@ -37,6 +37,6 @@ private:
     void mapCb(nav_msgs::OccupancyGrid map);
     void pointsStateCb(geometry_msgs::PoseArray msg);
     void addInflationLayerToOriginMap();
-    double distanceOffset();
+    double distanceOffset(double distance,double car_vel_x,double car_vel_y,double point_vel_x,double point_vel_y);
 };
 #endif

@@ -34,25 +34,6 @@ void Own_Cost_Map::mapCb(nav_msgs::OccupancyGrid map)
 {
     origin_map_ = map;
     load_map_flag_ = 1;
-
-    // origin_map_.header.stamp = map.header.stamp;
-    // origin_map_.header.frame_id = map.header.frame_id;
-    // origin_map_.info.map_load_time = map.info.map_load_time;
-    // origin_map_.info.resolution = map.info.resolution;
-    // origin_map_.info.width = map.info.width;
-    // origin_map_.info.height = map.info.height;
-    // origin_map_.info.origin.position.x = map.info.origin.position.x;
-    // origin_map_.info.origin.position.y = map.info.origin.position.y;
-    // origin_map_.info.origin.position.z = map.info.origin.position.z;
-    // origin_map_.info.origin.orientation.x = map.info.origin.orientation.x;
-    // origin_map_.info.origin.orientation.y = map.info.origin.orientation.y;
-    // origin_map_.info.origin.orientation.z = map.info.origin.orientation.z;
-    // origin_map_.info.origin.orientation.w = map.info.origin.orientation.w;
-    // origin_map_.data.resize(map.data.size());
-    // for(int i = 0;i < map.data.size();i++)
-    // {
-    //     origin_map_.data[i] = map.data[i];
-    // }
 }
 
 void Own_Cost_Map::addInflationLayerToOriginMap()
@@ -89,10 +70,33 @@ void Own_Cost_Map::pointsStateCb(geometry_msgs::PoseArray msg)
     nav_msgs::OccupancyGrid new_map = new_map_;
     for(int i = 1;i < msg.poses.size();i++)
     {
-        double v_length = sqrt(msg.poses[i].orientation.x * msg.poses[i].orientation.x + msg.poses[i].orientation.y * msg.poses[i].orientation.y);
-        int x0 = (msg.poses[i].position.x + position_offset_ * msg.poses[i].orientation.x / v_length - origin_map_.info.origin.position.x) / origin_map_.info.resolution;
-        int y0 = (msg.poses[i].position.y + position_offset_ * msg.poses[i].orientation.y / v_length - origin_map_.info.origin.position.y) / origin_map_.info.resolution;
+        double det_x = msg.poses[i].position.x - msg.poses[0].position.x;
+        double det_y = msg.poses[i].position.y - msg.poses[0].position.y;
+        double distance = sqrt(det_x * det_x + det_y * det_y);
+        int x0 = (msg.poses[i].position.x + distanceOffset(distance,0,0,msg.poses[i].orientation.x,0) - origin_map_.info.origin.position.x) / origin_map_.info.resolution;
+        int y0 = (msg.poses[i].position.y + distanceOffset(distance,0,0,0,msg.poses[i].orientation.y) - origin_map_.info.origin.position.y) / origin_map_.info.resolution;
         int det_r = inflation_radios_ / new_map.info.resolution;
+        for(int x1 = x0 - det_r;x1 < x0 + det_r;x1++)
+        {
+            int height1 = sqrt(det_r * det_r - (x1 - x0) * (x1 - x0));
+            for(int y1 = y0 - height1;y1 < y0 + height1;y1++)
+            {
+                if((x1 >= 0) && (x1 <= new_map.info.width) && (y1 >= 0) && (y1 <= new_map.info.height))
+                {
+                    int map_node_state = new_map.data[y1 * new_map.info.width + x1];
+                    new_map.data[y1 * new_map.info.width + x1] = map_node_state >= 65 ? 100:30;
+                }
+            }
+        }
+    }
+    for(int i = 1;i < msg.poses.size();i++)
+    {
+        double det_x = msg.poses[i].position.x - msg.poses[0].position.x;
+        double det_y = msg.poses[i].position.y - msg.poses[0].position.y;
+        double distance = sqrt(det_x * det_x + det_y * det_y);
+        int x0 = (msg.poses[i].position.x + distanceOffset(distance,0,0,msg.poses[i].orientation.x,0) - origin_map_.info.origin.position.x) / origin_map_.info.resolution;
+        int y0 = (msg.poses[i].position.y + distanceOffset(distance,0,0,0,msg.poses[i].orientation.y) - origin_map_.info.origin.position.y) / origin_map_.info.resolution;
+        int det_r = inflation_radios_ / new_map.info.resolution * 0.7;
         for(int x1 = x0 - det_r;x1 < x0 + det_r;x1++)
         {
             int height1 = sqrt(det_r * det_r - (x1 - x0) * (x1 - x0));
@@ -109,9 +113,10 @@ void Own_Cost_Map::pointsStateCb(geometry_msgs::PoseArray msg)
     pub_own_cost_map_.publish(new_map);
 }
 
-double Own_Cost_Map::distanceOffset()
+double Own_Cost_Map::distanceOffset(double distance,double car_vel_x,double car_vel_y,double point_vel_x,double point_vel_y)
 {
     double ans;
+    ans = position_offset_ * (point_vel_x + point_vel_y) * distance;
     return ans;
 }
 
