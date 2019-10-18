@@ -52,6 +52,7 @@ Object_Tracking::Object_Tracking()
     pub_vel_ = n_.advertise<geometry_msgs::PoseArray>("/object_velocity",1);
     pub_rviz_box_ = n_.advertise<visualization_msgs::MarkerArray>("/point_category",1);
     pub_rqt_plot_ = n_.advertise<std_msgs::Float32>("rqt_plot_test",1);
+    pub_points_state_ = n_.advertise<geometry_msgs::PoseArray>("/points_state",1);
 
     ros::spin();
 }
@@ -118,6 +119,8 @@ void Object_Tracking::pointCloudClassification(sensor_msgs::PointCloud point_clo
 
     correlationOperate();
 
+    pubPointsState();
+
     displayInRviz();
 }
 
@@ -154,6 +157,33 @@ double Object_Tracking::distancePointToLidar(geometry_msgs::Point32 point)
     //      << point.x << "," << point.y << "," << point.z << endl
     //      << ans << endl;
     return ans;
+}
+
+void Object_Tracking::pubPointsState()
+{
+    geometry_msgs::PoseArray poses;
+    poses.header.frame_id = category_of_points_of_time_[0][0]->point_cloud_.header.frame_id;
+    geometry_msgs::Pose pose1;
+    pose1.position.x = point_lidar_.x;
+    pose1.position.y = point_lidar_.y;
+    pose1.position.z = point_lidar_.z;
+    poses.poses.push_back(pose1);
+
+    int n = category_of_points_of_time_.size() - 1;
+    for(int i = 0;i < category_of_points_of_time_[n].size();i++)
+    {
+        for(int j = 0;j < category_of_points_of_time_[n][i]->point_cloud_.points.size();j++)
+        {
+            pose1.position.x = category_of_points_of_time_[n][i]->point_cloud_.points[j].x;
+            pose1.position.y = category_of_points_of_time_[n][i]->point_cloud_.points[j].y;
+            pose1.position.z = category_of_points_of_time_[n][i]->point_cloud_.points[j].z;
+            pose1.orientation.x = category_of_points_of_time_[n][i]->linear_velocity_.x;
+            pose1.orientation.y = category_of_points_of_time_[n][i]->linear_velocity_.y;
+            poses.poses.push_back(pose1);
+        }
+    }
+
+    pub_points_state_.publish(poses);
 }
 
 void Object_Tracking::displayInRviz()

@@ -4,6 +4,7 @@
     <!--node name="lidar_optic_angle" pkg="agv_driver" type="lidar_optic_angle"/-->
 
     <!--include file="$(find agv_driver)/launch/navigation.launch"/-->
+
     <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find agv_driver)/slam_rviz.rviz"/-->
 
     <!--node name="startup_script" pkg="agv_driver" type="startup_script"/-->
@@ -14,5 +15,7 @@
 
     <node name="rviz" pkg="rviz" type="rviz" output="screen"/>
 
-    <node name="obstacle_points" pkg="point_cloud_test" type="obstacle_points" output="screen"/>
+    <node name="obstacle_points" pkg="point_cloud_test" type="obstacle_points"/>
+
+    <node name="object_tracking" pkg="point_cloud_test" type="object_tracking"/>
 </launch>

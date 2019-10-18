@@ -54,7 +54,9 @@ private:
     ros::Publisher pub_vel_;
     ros::Publisher pub_rviz_box_;
     ros::Publisher pub_rqt_plot_;
+    ros::Publisher pub_points_state_;
     void subPointsCb(sensor_msgs::PointCloud msg);
+    void pubPointsState();
     void rqtPlotDisplay(float data);
 
     double clusterRadio_; //d * cluster_threshold_slope
