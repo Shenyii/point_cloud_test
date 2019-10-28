@@ -11,6 +11,7 @@
 #include <string>
 #include <pthread.h>
 #include <signal.h>
+#include "tf_listerner.h"
 
 using namespace std;
 
@@ -25,10 +26,12 @@ private:
     ros::Subscriber sub_map_;
     ros::Subscriber sub_points_state_;
     ros::Publisher pub_own_cost_map_;
+    ros::Publisher pub_dwa_map_;
     nav_msgs::OccupancyGrid origin_map_;
     nav_msgs::OccupancyGrid new_map_;
     int load_map_flag_;
     geometry_msgs::PoseArray origin_points_;
+    //Tf_Listerner* car_in_map_;
 
     double inflation_radios_;
     double position_offset_;
@@ -38,5 +41,9 @@ private:
     void pointsStateCb(geometry_msgs::PoseArray msg);
     void addInflationLayerToOriginMap();
     double distanceOffset(double distance,double car_vel_x,double car_vel_y,double point_vel_x,double point_vel_y);
+    void pubDwaMap(nav_msgs::OccupancyGrid map);
+
+    ros::Publisher pub_a_pose_;
+    void mapTestDisplay(nav_msgs::OccupancyGrid map);
 };
 #endif

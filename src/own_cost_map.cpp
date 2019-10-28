@@ -4,7 +4,9 @@ Own_Cost_Map::Own_Cost_Map()
 :load_map_flag_(0),inflation_radios_(0.5)
 {
     pub_own_cost_map_ = n_.advertise<nav_msgs::OccupancyGrid>("/own_cost_map",2);
+    pub_dwa_map_ = n_.advertise<nav_msgs::OccupancyGrid>("/dwa_map",2);
     sub_map_ = n_.subscribe("/map", 2, &Own_Cost_Map::mapCb,this);
+    //car_in_map_ = new Tf_Listerner("map","base_footprint");
     while(load_map_flag_ == 0)
     {
         ros::spinOnce();
@@ -14,6 +16,8 @@ Own_Cost_Map::Own_Cost_Map()
     f = boost::bind(&Own_Cost_Map::dynamicCb,this,_1,_2);
     server.setCallback(f);
     sub_points_state_ = n_.subscribe("/points_state",1,&Own_Cost_Map::pointsStateCb,this);
+
+    //pub_a_pose_ = n_.advertise<geometry_msgs::PoseStamped>("/test_pose", 1);
 
     ros::spin();
 }
@@ -52,7 +56,7 @@ void Own_Cost_Map::addInflationLayerToOriginMap()
                 int height1 = sqrt(det_r * det_r - (x1 - x0) * (x1 - x0));
                 for(y1 = y0 - height1;y1 < y0 + height1;y1++)
                 {
-                    if((x1 >= 0) && (x1 <= new_map_.info.width) && (y1 >= 0) && (y1 <= new_map_.info.height))
+                    if((x1 >= 0) && (x1 < new_map_.info.width) && (y1 >= 0) && (y1 < new_map_.info.height))
                     {
                         int map_node_state = new_map_.data[y1 * new_map_.info.width + x1];
                         new_map_.data[y1 * new_map_.info.width + x1] = map_node_state >= 65 ? 100:50;
@@ -66,7 +70,6 @@ void Own_Cost_Map::addInflationLayerToOriginMap()
 
 void Own_Cost_Map::pointsStateCb(geometry_msgs::PoseArray msg)
 {
-    //origin_points_ = msg;
     nav_msgs::OccupancyGrid new_map = new_map_;
     for(int i = 1;i < msg.poses.size();i++)
     {
@@ -110,6 +113,7 @@ void Own_Cost_Map::pointsStateCb(geometry_msgs::PoseArray msg)
             }
         }
     }
+
     pub_own_cost_map_.publish(new_map);
 }
 
@@ -118,6 +122,41 @@ double Own_Cost_Map::distanceOffset(double distance,double car_vel_x,double car_
     double ans;
     ans = position_offset_ * (point_vel_x + point_vel_y) * distance;
     return ans;
+}
+
+// void Own_Cost_Map::pubDwaMap(nav_msgs::OccupancyGrid map)
+// {
+//     nav_msgs::OccupancyGrid dwa_map;
+//     double car_x = car_in_map_->x();
+//     double car_y = car_in_map_->y();
+//     dwa_map.header.frame_id = "map";
+//     dwa_map.info.resolution = map.info.resolution;
+//     dwa_map.info.width = 1.5 / map.info.resolution;
+//     dwa_map.info.height = 1.5 / map.info.resolution;
+//     dwa_map.info.origin.position.x = car_x;
+//     dwa_map.info.origin.position.y = car_y;
+//     dwa_map.info.origin.position.z = 0;
+//     dwa_map.info.orientation.x = 0;
+//     dwa_map.info.orientation.y = 0;
+//     dwa_map.info.orientation.z = 0;
+//     dwa_map.info.orientation.w = 1;
+//     int det_r = 1.5 / map.info.resolution;
+//     dwa_map.data.resize(dwa_map.info.width * dwa_map.info.height);
+//     for(int i = 0;i < dwa_map.data.size();i++)
+//     {}
+// }
+
+void Own_Cost_Map::mapTestDisplay(nav_msgs::OccupancyGrid map)
+{
+    geometry_msgs::PoseStamped pose1;
+    double map_x = int(2268800 % map.info.width) * map.info.resolution + map.info.origin.position.x;
+    double map_y = int(2268800 / map.info.width) * map.info.resolution + map.info.origin.position.y;
+    pose1.header.frame_id = "map";
+    pose1.pose.position.x = map_x;
+    pose1.pose.position.y = map_y;
+    pose1.pose.position.z = 0;
+    pose1.pose.orientation.w = 1;
+    pub_a_pose_.publish(pose1);
 }
 
 int main(int argc,char** argv)
